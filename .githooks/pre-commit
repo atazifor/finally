@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Every commit is reviewed by Codex; high-severity findings block the commit.
+# Enable once per clone: git config core.hooksPath .githooks
+set -uo pipefail
+
+git diff --cached --quiet && exit 0
+
+echo "pre-commit: Codex is reviewing the staged changes (this can take a few minutes)..." >&2
+"$(git rev-parse --show-toplevel)/.claude/scripts/codex_review.sh" --staged
+case $? in
+  0) exit 0 ;;
+  2) echo "pre-commit: commit blocked by high-severity Codex findings. Fix them and commit again." >&2; exit 1 ;;
+  *) echo "pre-commit: commit blocked because the Codex review did not run (see above)." >&2; exit 1 ;;
+esac
